@@ -30,3 +30,9 @@ type Time struct {
   Seconds int `json:"seconds,omitempty"`
   Hundredths int `json:"hundredths,omitempty"`
 }
+
+type Song struct {
+  Track Track
+  Lyrics Lyrics
+  Subtitle Synced
+}
