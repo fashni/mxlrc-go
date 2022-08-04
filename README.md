@@ -8,13 +8,21 @@ Command line tool to fetch synced lyrics from [Musixmatch](https://www.musixmatc
 
 ---
 
-## Download (TBA)
+## Download
+### Standalone binary
+**TBA**
+
+### Build from source
+Required Go 1.19
+```
+go install github.com/fashni/mxlrc-go@latest
+```
 
 ---
 
 ## Usage
 ```
-Usage: mxlrc [--outdir OUTDIR] [--cooldown COOLDOWN] [--token TOKEN] SONG [SONG ...]
+Usage: mxlrc-go [--outdir OUTDIR] [--cooldown COOLDOWN] [--token TOKEN] SONG [SONG ...]
 
 Positional arguments:
   SONG                        song information in [ artist,title ] format (required)
@@ -30,19 +38,19 @@ Options:
 ## Example:
 ### One song
 ```
-mxlrc adele,hello
+mxlrc-go adele,hello
 ```
 ### Multiple song and custom output directory
 ```
-mxlrc adele,hello "the killers,mr. brightside" -o some_directory
+mxlrc-go adele,hello "the killers,mr. brightside" -o some_directory
 ```
 ### With a text file and custom cooldown time
 ```
-mxlrc example_input.txt -c 20
+mxlrc-go example_input.txt -c 20
 ```
-### Directory Mode (recursive) (TBA)
+### Directory Mode (recursive) **(TBA)**
 ```
-mxlrc "Dream Theater"
+mxlrc-go "Dream Theater"
 ```
 > **_This option overrides the `-o/--outdir` argument which means the lyrics will be saved in the same directory as the given input._**
 
