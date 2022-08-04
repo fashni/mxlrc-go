@@ -1,4 +1,4 @@
-module mxlrc
+module github.com/fashni/MxLRC-Go
 
 go 1.19
 
