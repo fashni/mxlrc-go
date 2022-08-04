@@ -2,6 +2,7 @@ package main
 
 import (
   "bufio"
+  "errors"
   "log"
   "os"
   "regexp"
@@ -53,11 +54,14 @@ func getSongText(text_fn string, save_path string) []Inputs {
 func parseInput(argsong []string, outdir string) ([]Inputs, string) {
   if len(argsong) == 1 {
     fi, err := os.Stat(argsong[0])
-    if err != nil {
+    if err == nil {
+      if !fi.IsDir() {
+        return getSongText(argsong[0], outdir), "text"
+      } // else {
+        // return getSongDir(argsong[0]), "dir"
+      // }
+    } else if !errors.Is(err, os.ErrNotExist) {
       log.Fatal(err)
-    }
-    if !fi.IsDir() {
-      return getSongText(argsong[0], outdir), "text"
     }
   }
   return getSongMulti(argsong, outdir), "cli"

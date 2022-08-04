@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-  start := time.Now()
   var args struct {
     Song     []string `arg:"positional,required" help:"song information in [ artist,title ] format (required)"`
     Outdir   string   `arg:"-o,--outdir" help:"output directory, default: lyrics" default:"lyrics"`
@@ -55,6 +54,4 @@ func main() {
       fmt.Println("")
     }
   }
-  timeElapsed := time.Since(start)
-  fmt.Printf("took %s", timeElapsed)
 }
