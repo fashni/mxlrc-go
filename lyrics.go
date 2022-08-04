@@ -5,16 +5,16 @@ import (
   "fmt"
   "log"
   "os"
-  "strings"
   "path/filepath"
+  "strings"
 )
 
 func writeLRC(song Song, filename string, outdir string) {
   var fn string
   if fn = filename; filename == "" {
-    fn = fmt.Sprintf("%s - %s.lrc", song.Track.ArtistName, song.Track.TrackName)
+    fn = slugify(fmt.Sprintf("%s - %s", song.Track.ArtistName, song.Track.TrackName))
   }
-  fp := filepath.Join(outdir, fn)
+  fp := filepath.Join(outdir, fn) + ".lrc"
 
   tags := []string{
     "[by:fashni]",
@@ -28,25 +28,12 @@ func writeLRC(song Song, filename string, outdir string) {
     tags = append(tags, fmt.Sprintf("[length:%02d:%02d]", song.Track.TrackLength/60, song.Track.TrackLength%60))
   }
 
-  if len(song.Subtitle.Lines) > 0 {
-    log.Println("Saving synced lyrics")
-    writeSyncedLRC(song, fp, tags)
-    return
-  }
-  if song.Lyrics.LyricsBody != "" {
-    log.Println("Saving unsynced lyrics")
-    writeUnsyncedLRC(song, fp, tags)
-    return
-  }
-}
-
-func writeUnsyncedLRC(song Song, fpath string, tags []string) {
-  f, err := os.Create(fpath)
+  f, err := os.Create(fp)
   if err != nil {
     log.Fatal(err)
   }
   defer f.Close()
-  
+
   buffer := bufio.NewWriter(f)
   for _, tag := range tags {
     _, err := buffer.WriteString(tag + "\n")
@@ -55,52 +42,53 @@ func writeUnsyncedLRC(song Song, fpath string, tags []string) {
     }
   }
 
+  if len(song.Subtitles.Lines) > 0 {
+    log.Println("saving synced lyrics")
+    writeSyncedLRC(song, fp, buffer)
+    log.Printf("synced lyrics saved: %s", fp)
+    return
+  }
+  if song.Lyrics.LyricsBody != "" {
+    log.Println("saving unsynced lyrics")
+    writeUnsyncedLRC(song, fp, buffer)
+    log.Printf("unsynced lyrics saved: %s", fp)
+    return
+  }
+}
+
+func writeUnsyncedLRC(song Song, fpath string, buff *bufio.Writer) {
   lines := strings.Split(song.Lyrics.LyricsBody, "\n")
   var text string
   for _, line := range lines {
     if text = line; line == "" {
       text = "♪"
     }
-    _, err := buffer.WriteString("[00:00.00]" + text + "\n")
+    _, err := buff.WriteString("[00:00.00]" + text + "\n")
     if err != nil {
       log.Fatal(err)
     }
   }
 
-  if err := buffer.Flush(); err != nil {
+  if err := buff.Flush(); err != nil {
     log.Fatal(err)
   }
 }
 
-func writeSyncedLRC(song Song, fpath string, tags []string) {
-  f, err := os.Create(fpath)
-  if err != nil {
-    log.Fatal(err)
-  }
-  defer f.Close()
-
-  buffer := bufio.NewWriter(f)
-  for _, tag := range tags {
-    _, err := buffer.WriteString(tag + "\n")
-    if err != nil {
-      log.Fatal(err)
-    }
-  }
-
+func writeSyncedLRC(song Song, fpath string, buff *bufio.Writer) {
   var text string
   var fLine string
-  for _, line := range song.Subtitle.Lines {
+  for _, line := range song.Subtitles.Lines {
     if text = line.Text; line.Text == "" {
       text = "♪"
     }
     fLine = fmt.Sprintf("[%02d:%02d.%02d]%s", line.Time.Minutes, line.Time.Seconds, line.Time.Hundredths, text)
-    _, err := buffer.WriteString(fLine + "\n")
+    _, err := buff.WriteString(fLine + "\n")
     if err != nil {
       log.Fatal(err)
     }
   }
 
-  if err := buffer.Flush(); err != nil {
+  if err := buff.Flush(); err != nil {
     log.Fatal(err)
   }
 }
