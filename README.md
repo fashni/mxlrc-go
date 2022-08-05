@@ -1,4 +1,6 @@
 # MxLRC
+[![build](https://github.com/fashni/mxlrc-go/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/fashni/mxlrc-go/actions/workflows/build.yml)
+
 Command line tool to fetch synced lyrics from [Musixmatch](https://www.musixmatch.com/) and save it as *.lrc file.
 
 ---
