@@ -1,4 +1,4 @@
-name: Go
+name: build
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         go: [1.17, 1.18, 1.19]
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
     - uses: actions/checkout@v3

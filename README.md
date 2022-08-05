@@ -13,7 +13,7 @@ Command line tool to fetch synced lyrics from [Musixmatch](https://www.musixmatc
 **TBA**
 
 ### Build from source
-Required Go 1.19
+Required Go 1.17+
 ```
 go install github.com/fashni/mxlrc-go@latest
 ```
