@@ -99,6 +99,8 @@ func (mx Musixmatch) findLyrics(track Track) (Song, error) {
       if err := json.Unmarshal(tlg.Get("body", "lyrics").MarshalTo(nil), &song.Lyrics); err != nil {
         return song, err
       }
+    } else if song.Track.Instrumental == 1 {
+      log.Println("song is instrumental")
     } else {
       return song, errors.New("no lyrics found")
     }

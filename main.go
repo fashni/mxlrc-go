@@ -10,15 +10,10 @@ import (
 )
 
 func main() {
-  var args struct {
-    Song     []string `arg:"positional,required" help:"song information in [ artist,title ] format (required)"`
-    Outdir   string   `arg:"-o,--outdir" help:"output directory, default: lyrics" default:"lyrics"`
-    Cooldown int      `arg:"-c,--cooldown" help:"cooldown time in seconds, default: 30" default:"30"`
-    Token    string   `arg:"-t,--token" help:"musixmatch token" default:""`
-  }
+  var args Args
   arg.MustParse(&args)
 
-  inputs, mode := parseInput(args.Song, args.Outdir)
+  inputs, mode := parseInput(args)
   if mode == "dir" {
     args.Outdir = ""
   } else {
@@ -35,11 +30,13 @@ func main() {
     Token: token,
   }
 
+  fmt.Printf("\n%d lyrics to fetch\n\n", len(inputs))
   for idx, input := range inputs {
     log.Printf("searching song: %s - %s", input.Track.ArtistName, input.Track.TrackName)
     song, err := mx.findLyrics(input.Track)
     if err != nil {
       log.Println(err)
+      fmt.Printf("\n\n")
       continue
     }
 
@@ -51,7 +48,7 @@ func main() {
         fmt.Printf("    Please wait... %ds    \r", i)
         time.Sleep(time.Second)
       }
-      fmt.Println("")
+      fmt.Printf("\n\n")
     }
   }
 }

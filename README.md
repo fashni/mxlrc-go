@@ -50,7 +50,7 @@ mxlrc-go adele,hello "the killers,mr. brightside" -o some_directory
 ```
 mxlrc-go example_input.txt -c 20
 ```
-### Directory Mode (recursive) **(TBA)**
+### Directory Mode (recursive)
 ```
 mxlrc-go "Dream Theater"
 ```

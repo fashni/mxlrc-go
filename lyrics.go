@@ -12,9 +12,9 @@ import (
 func writeLRC(song Song, filename string, outdir string) {
   var fn string
   if fn = filename; filename == "" {
-    fn = slugify(fmt.Sprintf("%s - %s", song.Track.ArtistName, song.Track.TrackName))
+    fn = slugify(fmt.Sprintf("%s - %s", song.Track.ArtistName, song.Track.TrackName)) + ".lrc"
   }
-  fp := filepath.Join(outdir, fn) + ".lrc"
+  fp := filepath.Join(outdir, fn)
 
   tags := []string{
     "[by:fashni]",
@@ -54,6 +54,12 @@ func writeLRC(song Song, filename string, outdir string) {
     log.Printf("unsynced lyrics saved: %s", fp)
     return
   }
+  if song.Track.Instrumental == 1 {
+    log.Println("saving instrumental")
+    writeInstrumentalLRC(song, fp, buffer)
+    log.Printf("instrumental lyrics saved: %s", fp)
+    return
+  }
 }
 
 func writeUnsyncedLRC(song Song, fpath string, buff *bufio.Writer) {
@@ -89,6 +95,14 @@ func writeSyncedLRC(song Song, fpath string, buff *bufio.Writer) {
   }
 
   if err := buff.Flush(); err != nil {
+    log.Fatal(err)
+  }
+}
+
+func writeInstrumentalLRC(song Song, fpath string, buff *bufio.Writer) {
+  line := "[00:00.00]♪ Instrumental ♪"
+  _, err := buff.WriteString(line + "\n")
+  if err != nil {
     log.Fatal(err)
   }
 }

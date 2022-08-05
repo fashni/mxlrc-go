@@ -5,11 +5,19 @@ import (
   "errors"
   "log"
   "os"
+  "path/filepath"
+  "reflect"
   "regexp"
+  "sort"
   "strings"
 
+  "github.com/dhowden/tag"
   "golang.org/x/text/unicode/norm"
 )
+
+func supportedFType() [8]string {
+  return [8]string{".mp3", ".m4a", ".m4b", ".m4p", ".alac", ".flac", ".ogg", ".dsf"}
+}
 
 func assertInput(song string) *Track {
   s := strings.Split(song, ",")
@@ -51,20 +59,81 @@ func getSongText(text_fn string, save_path string) []Inputs {
   return getSongMulti(song_list, save_path)
 }
 
-func parseInput(argsong []string, outdir string) ([]Inputs, string) {
-  if len(argsong) == 1 {
-    fi, err := os.Stat(argsong[0])
+func getSongDir(dir string, songs []Inputs, update bool, limit int, depth int, bfs bool) []Inputs {
+  log.Printf("scanning directory: %s", dir)
+  files, err := os.ReadDir(dir)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  sort.Slice(files, func(i int, j int) bool {
+    id1, id2 := files[i].IsDir(), files[j].IsDir()
+    if id1 == id2 {
+      return files[i].Name() < files[j].Name()
+    }
+    return !bfs || !id1 && id2
+  })
+
+  for _, file := range files {
+    if file.IsDir() {
+      if depth < limit {
+        songs = getSongDir(filepath.Join(dir, file.Name()), songs, update, limit, depth+1, bfs)
+      }
+      continue
+    }
+    if filepath.Ext(file.Name()) == ".lrc" {
+      continue
+    }
+    lrc_file := strings.Replace(file.Name(), filepath.Ext(file.Name()), ".lrc", -1)
+    if _, err := os.Stat(filepath.Join(dir, lrc_file)); err == nil && !update {
+      log.Printf("skipping %s. lyrics file exist.", file.Name())
+      continue
+    }
+
+    if !isInArray(supportedFType(), strings.ToLower(filepath.Ext(file.Name()))) {
+      log.Printf("skipping %s. unsupported file format.", file.Name())
+      continue
+    }
+
+    f, err := os.Open(filepath.Join(dir, file.Name()))
+    if err != nil {
+      log.Println("error reading file: ", err)
+      continue
+    }
+    defer f.Close()
+
+    m, err := tag.ReadFrom(f)
+    if err != nil {
+      log.Println(file.Name(), err)
+      continue
+    }
+
+    log.Printf("adding %s", file.Name())
+    song := Inputs{
+      Track:    Track{ArtistName: m.Artist(), TrackName: m.Title()},
+      Outdir:   dir,
+      Filename: strings.Replace(file.Name(), filepath.Ext(file.Name()), ".lrc", -1),
+    }
+    songs = append(songs, song)
+  }
+  return songs
+}
+
+func parseInput(args Args) ([]Inputs, string) {
+  if len(args.Song) == 1 {
+    fi, err := os.Stat(args.Song[0])
     if err == nil {
       if !fi.IsDir() {
-        return getSongText(argsong[0], outdir), "text"
-      } // else {
-        // return getSongDir(argsong[0]), "dir"
-      // }
+        return getSongText(args.Song[0], args.Outdir), "text"
+      } else {
+        var songs []Inputs
+        return getSongDir(args.Song[0], songs, args.Update, args.Depth, 0, args.BFS), "dir"
+      }
     } else if !errors.Is(err, os.ErrNotExist) {
       log.Fatal(err)
     }
   }
-  return getSongMulti(argsong, outdir), "cli"
+  return getSongMulti(args.Song, args.Outdir), "cli"
 }
 
 func slugify(s string) string {
@@ -74,4 +143,17 @@ func slugify(s string) string {
   s = re1.ReplaceAllString(s, "")
   s = re2.ReplaceAllString(s, "-")
   return strings.Trim(s, "-_") // remove trailing and leading dash or underscore
+}
+
+func isInArray(arrType interface{}, item interface{}) bool {
+  arr := reflect.ValueOf(arrType)
+  if arr.Kind() != reflect.Array {
+    log.Fatal("invalid data type")
+  }
+  for i := 0; i < arr.Len(); i++ {
+    if arr.Index(i).Interface() == item {
+      return true
+    }
+  }
+  return false
 }
