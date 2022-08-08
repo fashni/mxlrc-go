@@ -30,9 +30,12 @@ Positional arguments:
   SONG                        song information in [ artist,title ] format (required)
 
 Options:
-  --outdir OUTDIR, -o OUTDIR  output directory, default: lyrics [default: lyrics]
+  --outdir OUTDIR, -o OUTDIR  output directory [default: lyrics]
   --cooldown COOLDOWN, -c COOLDOWN
-                              cooldown time in seconds, default: 30 [default: 30]
+                              cooldown time in seconds [default: 15]
+  --depth DEPTH, -d DEPTH     (directory mode) maximum recursion depth [default: 100]
+  --update, -u                (directory mode) update existing lyrics file
+  --bfs                       (directory mode) use breatdth-first-search traversal
   --token TOKEN, -t TOKEN     musixmatch token
   --help, -h                  display this help and exit
 ```

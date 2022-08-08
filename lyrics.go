@@ -9,7 +9,7 @@ import (
   "strings"
 )
 
-func writeLRC(song Song, filename string, outdir string) {
+func writeLRC(song Song, filename string, outdir string) bool {
   var fn string
   if fn = filename; filename == "" {
     fn = slugify(fmt.Sprintf("%s - %s", song.Track.ArtistName, song.Track.TrackName)) + ".lrc"
@@ -44,25 +44,27 @@ func writeLRC(song Song, filename string, outdir string) {
 
   if len(song.Subtitles.Lines) > 0 {
     log.Println("saving synced lyrics")
-    writeSyncedLRC(song, fp, buffer)
+    s := writeSyncedLRC(song, fp, buffer)
     log.Printf("synced lyrics saved: %s", fp)
-    return
+    return s
   }
   if song.Lyrics.LyricsBody != "" {
     log.Println("saving unsynced lyrics")
-    writeUnsyncedLRC(song, fp, buffer)
+    s := writeUnsyncedLRC(song, fp, buffer)
     log.Printf("unsynced lyrics saved: %s", fp)
-    return
+    return s
   }
   if song.Track.Instrumental == 1 {
     log.Println("saving instrumental")
-    writeInstrumentalLRC(song, fp, buffer)
+    s := writeInstrumentalLRC(song, fp, buffer)
     log.Printf("instrumental lyrics saved: %s", fp)
-    return
+    return s
   }
+  log.Println("Nothing to save")
+  return false
 }
 
-func writeUnsyncedLRC(song Song, fpath string, buff *bufio.Writer) {
+func writeUnsyncedLRC(song Song, fpath string, buff *bufio.Writer) bool {
   lines := strings.Split(song.Lyrics.LyricsBody, "\n")
   var text string
   for _, line := range lines {
@@ -71,16 +73,19 @@ func writeUnsyncedLRC(song Song, fpath string, buff *bufio.Writer) {
     }
     _, err := buff.WriteString("[00:00.00]" + text + "\n")
     if err != nil {
-      log.Fatal(err)
+      log.Println(err)
+      return false
     }
   }
 
   if err := buff.Flush(); err != nil {
-    log.Fatal(err)
+    log.Println(err)
+    return false
   }
+  return true
 }
 
-func writeSyncedLRC(song Song, fpath string, buff *bufio.Writer) {
+func writeSyncedLRC(song Song, fpath string, buff *bufio.Writer) bool {
   var text string
   var fLine string
   for _, line := range song.Subtitles.Lines {
@@ -90,19 +95,28 @@ func writeSyncedLRC(song Song, fpath string, buff *bufio.Writer) {
     fLine = fmt.Sprintf("[%02d:%02d.%02d]%s", line.Time.Minutes, line.Time.Seconds, line.Time.Hundredths, text)
     _, err := buff.WriteString(fLine + "\n")
     if err != nil {
-      log.Fatal(err)
+      log.Println(err)
+      return false
     }
   }
 
   if err := buff.Flush(); err != nil {
-    log.Fatal(err)
+    log.Println(err)
+    return false
   }
+  return true
 }
 
-func writeInstrumentalLRC(song Song, fpath string, buff *bufio.Writer) {
+func writeInstrumentalLRC(song Song, fpath string, buff *bufio.Writer) bool {
   line := "[00:00.00]♪ Instrumental ♪"
   _, err := buff.WriteString(line + "\n")
   if err != nil {
-    log.Fatal(err)
+    log.Println(err)
+    return false
   }
+  if err := buff.Flush(); err != nil {
+    log.Println(err)
+    return false
+  }
+  return true
 }

@@ -79,7 +79,7 @@ func (mx Musixmatch) findLyrics(track Track) (Song, error) {
       return song, err
     }
   case 401:
-    return song, errors.New("cooldown, try again in a few minutes")
+    return song, errors.New("too many request. increase the cooldown time and try again in a few minutes")
   case 404:
     return song, errors.New("no results found")
   default:

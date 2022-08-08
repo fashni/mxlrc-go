@@ -31,20 +31,18 @@ func assertInput(song string) *Track {
   return tr
 }
 
-func getSongMulti(song_list []string, save_path string) []Inputs {
-  var songs []Inputs
+func getSongMulti(song_list []string, save_path string, songs *InputsQueue) {
   for _, song := range song_list {
     track := assertInput(song)
     if track == nil {
       log.Printf("invalid input: %s", song)
       continue
     }
-    songs = append(songs, Inputs{*track, save_path, ""})
+    songs.push(Inputs{*track, save_path, ""})
   }
-  return songs
 }
 
-func getSongText(text_fn string, save_path string) []Inputs {
+func getSongText(text_fn string, save_path string, songs *InputsQueue) {
   f, err := os.Open(text_fn)
   if err != nil {
     log.Fatal(err)
@@ -56,10 +54,10 @@ func getSongText(text_fn string, save_path string) []Inputs {
     song_list = append(song_list, scanner.Text())
   }
   f.Close()
-  return getSongMulti(song_list, save_path)
+  getSongMulti(song_list, save_path, songs)
 }
 
-func getSongDir(dir string, songs []Inputs, update bool, limit int, depth int, bfs bool) []Inputs {
+func getSongDir(dir string, songs *InputsQueue, update bool, limit int, depth int, bfs bool) {
   log.Printf("scanning directory: %s", dir)
   files, err := os.ReadDir(dir)
   if err != nil {
@@ -77,7 +75,7 @@ func getSongDir(dir string, songs []Inputs, update bool, limit int, depth int, b
   for _, file := range files {
     if file.IsDir() {
       if depth < limit {
-        songs = getSongDir(filepath.Join(dir, file.Name()), songs, update, limit, depth+1, bfs)
+        getSongDir(filepath.Join(dir, file.Name()), songs, update, limit, depth+1, bfs)
       }
       continue
     }
@@ -114,26 +112,27 @@ func getSongDir(dir string, songs []Inputs, update bool, limit int, depth int, b
       Outdir:   dir,
       Filename: strings.Replace(file.Name(), filepath.Ext(file.Name()), ".lrc", -1),
     }
-    songs = append(songs, song)
+    songs.push(song)
   }
-  return songs
 }
 
-func parseInput(args Args) ([]Inputs, string) {
+func parseInput(args Args, in *InputsQueue) string {
   if len(args.Song) == 1 {
     fi, err := os.Stat(args.Song[0])
     if err == nil {
       if !fi.IsDir() {
-        return getSongText(args.Song[0], args.Outdir), "text"
+        getSongText(args.Song[0], args.Outdir, in)
+        return "text"
       } else {
-        var songs []Inputs
-        return getSongDir(args.Song[0], songs, args.Update, args.Depth, 0, args.BFS), "dir"
+        getSongDir(args.Song[0], in, args.Update, args.Depth, 0, args.BFS)
+        return "dir"
       }
     } else if !errors.Is(err, os.ErrNotExist) {
       log.Fatal(err)
     }
   }
-  return getSongMulti(args.Song, args.Outdir), "cli"
+  getSongMulti(args.Song, args.Outdir, in)
+  return "cli"
 }
 
 func slugify(s string) string {
